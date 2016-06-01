@@ -9,7 +9,25 @@ class Interpreter(object):
     """Simple Command Interpreter."""
 
     def __init__(self):
+        self._runner = True
         self.current_matrix = None
+
+    def run(self):
+        print('Draw Simple Matrix\n')
+        print('Available commands:\n')
+        available_commands = sorted(
+            attr for attr in dir(self) if attr.startswith('do_')
+        )
+        available_commands_with_help = [
+            '%s (%s)' % (cmd.replace('do_', ''), getattr(self, cmd).__doc__) for cmd in available_commands
+        ]
+        print('\n'.join(available_commands_with_help) + '\n')
+        try:
+            while self._runner:
+                self.execute_command(raw_input('Enter command: '))
+        except KeyboardInterrupt:
+            pass
+        print('\nbye.')
 
     def execute_command(self, command):
         try:
@@ -19,7 +37,7 @@ class Interpreter(object):
         except (IndexError, AttributeError):
             return None
 
-        if cmd != 'I' and self.current_matrix is None:
+        if cmd not in 'IX' and self.current_matrix is None:
             raise InterpreterError('No matrix instance. '
                                    'Start with the command I X Y.')
 
@@ -28,38 +46,42 @@ class Interpreter(object):
     #: commands
 
     def do_I(self, x_axis, y_axis):
-        """Example: I X N. X and N must be an integer."""
+        """Start Matrix, example: I X N"""
         self.current_matrix = Matrix(int(x_axis), int(y_axis))
 
     def do_L(self, x_axis, y_axis, color):
-        """Example: L X Y C. X and N must be an integer. C must be a pixel value."""
+        """Setting pixel, example: L X Y C"""
         self.current_matrix.set(int(x_axis) - 1, int(y_axis) - 1, color)
 
     def do_V(self, x_axis, start_y, end_y, color):
-        """Example: V X Y1 Y2 C."""
+        """Draw vertical line, example: V X Y1 Y2 C"""
         self.current_matrix.draw_vertical_segment(
             x_axis=int(x_axis) - 1, start_y=int(start_y) - 1, end_y=int(end_y), value=color
         )
 
     def do_H(self, start_x, end_x, y_axis, color):
-        """Example: H X1 X2 Y C."""
+        """Draw horizontal line, example: H X1 X2 Y C."""
         self.current_matrix.draw_horizontal_segment(
             start_x=int(start_x) - 1, end_x=int(end_x), y_axis=int(y_axis) - 1, value=color
         )
 
     def do_F(self, x_axis, y_axis, color):
-        """Example: F 3 3 J."""
+        """Fill region, example: F 3 3 J."""
         self.current_matrix.fill_region(x_axis=int(x_axis) - 1, y_axis=int(y_axis) - 1, value=color)
 
     def do_K(self, start_x, start_y, end_x, end_y, color):
-        """Example: K X1 Y1 X2 Y2 C."""
+        """Draw rectangle, example: K X1 Y1 X2 Y2 C."""
         self.current_matrix.draw_rectangle(start_x=int(start_x) -1, end_x=int(end_x),
                                            start_y=int(start_y) -1, end_y=int(end_y),
                                            value=color)
 
     def do_S(self, filename):
-        """Example: S name"""
+        """Save file, example: S name"""
         self.current_matrix.save(filename)
+
+    def do_X(self):
+        """Exit program"""
+        self._runner = False
 
 
 class Matrix(object):
@@ -131,6 +153,15 @@ class Matrix(object):
         return recursive_fill(self, x_axis, y_axis, value, region)
 
     def draw_rectangle(self, start_x, end_x, start_y, end_y, value):
+        """Draw rectangle.
+
+        :param start_x: (int).
+        :param end_x: (int).
+        :param start_y: (int).
+        :param end_y: (int).
+        :param value:
+            The pixel value.
+        """
         for y_axis in range(start_y, end_y):
             for x_axis in range(start_x, end_x):
                 self.set(y_axis=y_axis, x_axis=x_axis, value=value)
@@ -169,3 +200,8 @@ class Matrix(object):
         """Save the matrix as file."""
         with open(filename, 'w') as matrix_file:
             matrix_file.write(str(self))
+
+
+if __name__ == '__main__':
+    interpreter = Interpreter()
+    interpreter.run()
