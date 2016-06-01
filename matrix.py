@@ -51,6 +51,12 @@ class Interpreter(object):
         """Example: F 3 3 J."""
         self.current_matrix.fill_region(x_axis=int(x_axis) - 1, y_axis=int(y_axis) - 1, value=color)
 
+    def do_K(self, start_x, start_y, end_x, end_y, color):
+        """Example: K X1 Y1 X2 Y2 C."""
+        self.current_matrix.draw_rectangle(start_x=int(start_x) -1, end_x=int(end_x),
+                                           start_y=int(start_y) -1, end_y=int(end_y),
+                                           value=color)
+
     def do_S(self, filename):
         """Example: S name"""
         self.current_matrix.save(filename)
@@ -88,6 +94,7 @@ class Matrix(object):
         ]
 
     def get(self, x_axis, y_axis):
+        """Returns a pixel."""
         return self[y_axis][x_axis]
 
     def set(self, x_axis, y_axis, value):
@@ -107,22 +114,26 @@ class Matrix(object):
 
         def recursive_fill(matrix, x_axis, y_axis, value, region):
             left, right = x_axis - 1, x_axis + 1
-            top, bottom = y_axis + 1, y_axis - 1
+            top, bottom = y_axis - 1, y_axis + 1
 
             coordinates = [
-                (left, y_axis), (right, y_axis), (top, x_axis), (bottom, x_axis)
+                (left, y_axis), (right, y_axis), (x_axis, top), (x_axis, bottom)
             ]
 
-            for y, x in coordinates:
+            for x, y in coordinates:
                 try:
                     if matrix.get(x, y) == region:
                         matrix.set(x, y, value)
                         recursive_fill(matrix, x, y, value, region)
                 except IndexError:
-                    pass
+                    continue
 
         return recursive_fill(self, x_axis, y_axis, value, region)
 
+    def draw_rectangle(self, start_x, end_x, start_y, end_y, value):
+        for y_axis in range(start_y, end_y):
+            for x_axis in range(start_x, end_x):
+                self.set(y_axis=y_axis, x_axis=x_axis, value=value)
 
     def draw_vertical_segment(self, x_axis, start_y, end_y, value):
         """Draw vertical segment.
