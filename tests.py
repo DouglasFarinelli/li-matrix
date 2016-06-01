@@ -58,6 +58,18 @@ class MatrixTest(unittest.TestCase):
         self.interpreter.execute_command('H 3 4 2 Z')
         self.assertTrue(True)
 
+    def test_fill_region(self):
+        self.interpreter.execute_command('I 5 6')
+        self.interpreter.execute_command('L 2 3 A')
+        self.interpreter.execute_command('S one.bmp')
+        self.interpreter.execute_command('G 2 3 J')
+        self.interpreter.execute_command('V 2 3 4 W')
+        self.interpreter.execute_command('H 3 4 2 Z')
+        self.interpreter.execute_command('F 3 3 J')
+        self.interpreter.execute_command('S two.bmp')
+
+        self.assertEqual(str(self.interpreter.current_matrix), 'JJJJJ\nJJZZJ\nJWJJJ\nJWJJJ\nJJJJJ\nJJJJJ')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -33,7 +33,7 @@ class Interpreter(object):
 
     def do_L(self, x_axis, y_axis, color):
         """Example: L X Y C. X and N must be an integer. C must be a pixel value."""
-        self.current_matrix.set_pixel(int(x_axis) - 1, int(y_axis) - 1, color)
+        self.current_matrix.set(int(x_axis) - 1, int(y_axis) - 1, color)
 
     def do_V(self, x_axis, start_y, end_y, color):
         """Example: V X Y1 Y2 C."""
@@ -46,6 +46,10 @@ class Interpreter(object):
         self.current_matrix.draw_horizontal_segment(
             start_x=int(start_x) - 1, end_x=int(end_x), y_axis=int(y_axis) - 1, value=color
         )
+
+    def do_F(self, x_axis, y_axis, color):
+        """Example: F 3 3 J."""
+        self.current_matrix.fill_region(x_axis=int(x_axis) - 1, y_axis=int(y_axis) - 1, value=color)
 
     def do_S(self, filename):
         """Example: S name"""
@@ -83,7 +87,10 @@ class Matrix(object):
             [default_color for _ in range(x_axis)] for _ in range(y_axis)
         ]
 
-    def set_pixel(self, x_axis, y_axis, value):
+    def get(self, x_axis, y_axis):
+        return self[y_axis][x_axis]
+
+    def set(self, x_axis, y_axis, value):
         """Defines a pixel X to Y.
 
         :param x_axis:
@@ -94,6 +101,28 @@ class Matrix(object):
             The pixel value.
         """
         self[y_axis][x_axis] = str(value)
+
+    def fill_region(self, x_axis, y_axis, value):
+        region = self.get(x_axis, y_axis)
+
+        def recursive_fill(matrix, x_axis, y_axis, value, region):
+            left, right = x_axis - 1, x_axis + 1
+            top, bottom = y_axis + 1, y_axis - 1
+
+            coordinates = [
+                (left, y_axis), (right, y_axis), (top, x_axis), (bottom, x_axis)
+            ]
+
+            for y, x in coordinates:
+                try:
+                    if matrix.get(x, y) == region:
+                        matrix.set(x, y, value)
+                        recursive_fill(matrix, x, y, value, region)
+                except IndexError:
+                    pass
+
+        return recursive_fill(self, x_axis, y_axis, value, region)
+
 
     def draw_vertical_segment(self, x_axis, start_y, end_y, value):
         """Draw vertical segment.
@@ -108,7 +137,7 @@ class Matrix(object):
             The pixel value.
         """
         for y_axis in range(start_y, end_y):
-            self.set_pixel(x_axis=x_axis, y_axis=y_axis, value=value)
+            self.set(x_axis=x_axis, y_axis=y_axis, value=value)
 
     def draw_horizontal_segment(self, start_x, end_x, y_axis, value):
         """Draw vertical segment.
@@ -123,7 +152,7 @@ class Matrix(object):
             The pixel value.
         """
         for x_axis in range(start_x, end_x):
-            self.set_pixel(x_axis=x_axis, y_axis=y_axis, value=value)
+            self.set(x_axis=x_axis, y_axis=y_axis, value=value)
 
     def save(self, filename):
         """Save the matrix as file."""
