@@ -34,6 +34,21 @@ class MatrixTest(unittest.TestCase):
         self.interpreter.execute_command('L 2 3 A')
         self.assertEqual(str(self.interpreter.current_matrix), 'OOOOO\nOOOOO\nOAOOO\nOOOOO\nOOOOO\nOOOOO')
 
+    def test_ignored_commands(self):
+        self.interpreter.execute_command('I 5 6')
+        self.interpreter.execute_command('L 2 3 A')
+        self.interpreter.execute_command('S one.bmp')
+        self.interpreter.execute_command('G 2 3 J')
+        self.assertTrue(True)
+
+    def test_draw_new_vertical_segment(self):
+        self.interpreter.execute_command('I 5 6')
+        self.interpreter.execute_command('L 2 3 A')
+        self.interpreter.execute_command('S one.bmp')
+        self.interpreter.execute_command('G 2 3 J')
+        self.interpreter.execute_command('V 2 3 4 W')
+        self.assertTrue(True)
+
 
 if __name__ == '__main__':
     unittest.main()
