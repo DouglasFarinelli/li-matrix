@@ -49,6 +49,15 @@ class MatrixTest(unittest.TestCase):
         self.interpreter.execute_command('V 2 3 4 W')
         self.assertTrue(True)
 
+    def test_draw_new_horizontal_segment(self):
+        self.interpreter.execute_command('I 5 6')
+        self.interpreter.execute_command('L 2 3 A')
+        self.interpreter.execute_command('S one.bmp')
+        self.interpreter.execute_command('G 2 3 J')
+        self.interpreter.execute_command('V 2 3 4 W')
+        self.interpreter.execute_command('H 3 4 2 Z')
+        self.assertTrue(True)
+
 
 if __name__ == '__main__':
     unittest.main()

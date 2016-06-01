@@ -11,6 +11,22 @@ class Interpreter(object):
     def __init__(self):
         self.current_matrix = None
 
+    def execute_command(self, command):
+        try:
+            args = command.strip().split()
+            cmd, args = args[0], args[1:]
+            method = getattr(self, 'do_%s' % cmd)
+        except (IndexError, AttributeError):
+            return None
+
+        if cmd != 'I' and self.current_matrix is None:
+            raise InterpreterError('No matrix instance. '
+                                   'Start with the command I X Y.')
+
+        method(*args)
+
+    #: commands
+
     def do_I(self, x_axis, y_axis):
         """Example: I X N. X and N must be an integer."""
         self.current_matrix = Matrix(int(x_axis), int(y_axis))
@@ -22,26 +38,18 @@ class Interpreter(object):
     def do_V(self, x_axis, start_y, end_y, color):
         """Example: V X Y1 Y2 C."""
         self.current_matrix.draw_vertical_segment(
-            x_axis=int(x_axis) - 1, start_y=int(start_y) - 1, end_y=int(end_y) - 1, value=color
+            x_axis=int(x_axis) - 1, start_y=int(start_y) - 1, end_y=int(end_y), value=color
+        )
+
+    def do_H(self, start_x, end_x, y_axis, color):
+        """Example: H X1 X2 Y C."""
+        self.current_matrix.draw_horizontal_segment(
+            start_x=int(start_x) - 1, end_x=int(end_x), y_axis=int(y_axis) - 1, value=color
         )
 
     def do_S(self, filename):
         """Example: S name"""
         self.current_matrix.save(filename)
-
-    def execute_command(self, command):
-        try:
-            args = command.strip().split()
-            cmd, args = args[0], args[1:]
-            method = getattr(self, 'do_%s' % cmd)
-        except (IndexError, AttributeError):
-            return None
-
-        if cmd != 'I' and self.current_matrix is None:
-            raise InterpreterError('No matrix instance initialized. '
-                                   'Start with the command I X Y.')
-
-        method(*args)
 
 
 class Matrix(object):
@@ -60,20 +68,32 @@ class Matrix(object):
         self.default_pixel = str(default_pixel or 'O')
         self.data = self.init_data(x_axis, y_axis, self.default_pixel)
 
-    def __str__(self):
-        return '\n'.join(''.join(str(pixel) for pixel in row) for row in self)
-
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx_row):
         return self.data[idx_row]
 
+    def __str__(self):
+        return '\n'.join(''.join(str(pixel) for pixel in row) for row in self)
+
     @classmethod
     def init_data(cls, x_axis, y_axis, default_color):
         return [
             [default_color for _ in range(x_axis)] for _ in range(y_axis)
         ]
+
+    def set_pixel(self, x_axis, y_axis, value):
+        """Defines a pixel X to Y.
+
+        :param x_axis:
+            The column number (int).
+        :param y_axis:
+            The row number (int).
+        :param value:
+            The pixel value.
+        """
+        self[y_axis][x_axis] = str(value)
 
     def draw_vertical_segment(self, x_axis, start_y, end_y, value):
         """Draw vertical segment.
@@ -90,19 +110,22 @@ class Matrix(object):
         for y_axis in range(start_y, end_y):
             self.set_pixel(x_axis=x_axis, y_axis=y_axis, value=value)
 
-    def set_pixel(self, x_axis, y_axis, value):
-        """Defines a pixel X to Y.
+    def draw_horizontal_segment(self, start_x, end_x, y_axis, value):
+        """Draw vertical segment.
 
-        :param x_axis:
-            The column number (int).
         :param y_axis:
-            The row number (int).
+            The column number (int).
+        :param start_x:
+            Start segment (int).
+        :param end_x:
+            End segment (int).
         :param value:
             The pixel value.
         """
-        self[y_axis][x_axis] = str(value)
+        for x_axis in range(start_x, end_x):
+            self.set_pixel(x_axis=x_axis, y_axis=y_axis, value=value)
 
     def save(self, filename):
         """Save the matrix as file."""
-        with open(filename, 'w') as f:
-            f.write(str(self))
+        with open(filename, 'w') as matrix_file:
+            matrix_file.write(str(self))
